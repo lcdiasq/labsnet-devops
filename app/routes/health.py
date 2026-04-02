@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Query
 from app.services.calculator import sum_numbers
 
+
 router = APIRouter()
 
 
@@ -13,4 +14,3 @@ def health_check():
 def sum_route(a: int = Query(...), b: int = Query(...)):
     result = sum_numbers(a, b)
     return {"result": result}
-    
