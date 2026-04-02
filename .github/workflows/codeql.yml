@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ "main" ]
 
+permissions:
+  security-events: write
+  contents: read
+
 jobs:
   analyze:
     name: CodeQL Analysis
@@ -23,5 +27,5 @@ jobs:
       - name: Autobuild
         uses: github/codeql-action/autobuild@v3
 
-      - name: Rodar análise
+      - name: Analisar código
         uses: github/codeql-action/analyze@v3
