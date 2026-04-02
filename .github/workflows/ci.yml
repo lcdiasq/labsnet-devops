@@ -1,0 +1,60 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - dev
+      - feature/*
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  security-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Código
+      - name: Checkout código
+        uses: actions/checkout@v3
+
+      # 2. Python
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      # 3. Dependências
+      - name: Instalar dependências
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install bandit pip-audit
+
+      # 🔍 4. SAST (código)
+      - name: Rodar Bandit (SAST)
+        run: |
+          bandit -r app/
+
+      # 📦 5. Vulnerabilidades de dependências
+      - name: Rodar pip-audit
+        run: |
+          pip-audit
+
+      # 🧪 6. Testes
+      - name: Rodar testes
+        env:
+          PYTHONPATH: .
+        run: |
+          pytest
+
+      # 🐳 7. Build da imagem Docker
+      - name: Build Docker
+        run: |
+          docker build -t labsnet-api .
+
+      # 🔒 8. Scan da imagem com Trivy
+      - name: Scan Docker (Trivy)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'labsnet-api'
