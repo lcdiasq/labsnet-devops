@@ -1,0 +1,47 @@
+name: CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write   # NECESSÁRIO PARA WIF
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v3
+
+      # 🔐 Auth via WIF
+      - name: Auth GCP (WIF)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.projects/257333128598/locations/global/workloadIdentityPools/github-pool/providers/github-provider }}
+          service_account: ${{ secrets.github-actions@labsnet-devops.iam.gserviceaccount.com }}
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configurar Docker
+        run: |
+          gcloud auth configure-docker us-central1-docker.pkg.dev
+
+      - name: Build Docker
+        run: |
+          docker build -t us-central1-docker.pkg.dev/${{ secrets.labsnet-devops }}/labsnet-repo/labsnet-api .
+
+      - name: Push Docker
+        run: |
+          docker push us-central1-docker.pkg.dev/${{ secrets.labsnet-devops }}/labsnet-repo/labsnet-api
+
+      - name: Deploy Cloud Run
+        run: |
+          gcloud run deploy labsnet-api \
+            --image us-central1-docker.pkg.dev/${{ secrets.labsnet-devops }}/labsnet-repo/labsnet-api \
+            --platform managed \
+            --region us-central1 \
+            --allow-unauthenticated
