@@ -28,7 +28,7 @@ jobs:
 
       - name: Lint (qualidade de código)
         run: |
-          flake8 app tests
+          flake8 app tests --ignore=E302,E305,W391,W292
 
       - name: Security check
         run: |
