@@ -1,16 +1,14 @@
-from fastapi import APIRouter, Query
-from app.services.calculator import sum_numbers
-
+from fastapi import APIRouter
+import logging
 
 router = APIRouter()
 
+logger = logging.getLogger(__name__)
 
 @router.get("/health")
 def health_check():
-    return {"status": "ok"}
-
-
-@router.get("/sum")
-def sum_route(a: int = Query(...), b: int = Query(...)):
-    result = sum_numbers(a, b)
-    return {"result": result}
+    logger.info("Health check chamado")
+    return {
+        "status": "ok",
+        "service": "labsnet-api"
+    }

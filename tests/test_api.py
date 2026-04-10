@@ -1,15 +1,14 @@
-from fastapi.testclient import TestClient
-from app.main import app
+from fastapi import APIRouter
+import logging
 
-client = TestClient(app)
+router = APIRouter()
 
+logger = logging.getLogger(__name__)
 
-def test_sum_success():
-    response = client.get("/sum?a=2&b=3")
-    assert response.status_code == 200
-    assert response.json() == {"result": 5}
-
-
-def test_sum_invalid():
-    response = client.get("/sum?a=2&b=abc")
-    assert response.status_code == 422
+@router.get("/health")
+def health_check():
+    logger.info("Health check chamado")
+    return {
+        "status": "ok",
+        "service": "labsnet-api"
+    }

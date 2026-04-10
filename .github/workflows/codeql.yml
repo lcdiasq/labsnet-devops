@@ -1,31 +1,42 @@
-name: CodeQL Security Scan
+name: CD Pipeline
 
 on:
   push:
-    branches: [ "main", "dev" ]
-  pull_request:
     branches: [ "main" ]
 
-permissions:
-  security-events: write
-  contents: read
-
 jobs:
-  analyze:
-    name: CodeQL Analysis
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout código
         uses: actions/checkout@v3
 
-      - name: Inicializar CodeQL
-        uses: github/codeql-action/init@v3
+      # 🔐 Autenticação com JSON
+      - name: Auth GCP
+        uses: google-github-actions/auth@v2
         with:
-          languages: python
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
 
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
 
-      - name: Analisar código
-        uses: github/codeql-action/analyze@v3
+      - name: Configurar Docker
+        run: |
+          gcloud auth configure-docker us-central1-docker.pkg.dev
+
+      - name: Build Docker
+        run: |
+          docker build -t us-central1-docker.pkg.dev/${{ secrets.PROJECT_ID }}/labsnet-repo/labsnet-api .
+
+      - name: Push Docker
+        run: |
+          docker push us-central1-docker.pkg.dev/${{ secrets.PROJECT_ID }}/labsnet-repo/labsnet-api
+
+      - name: Deploy Cloud Run
+        run: |
+          gcloud run deploy labsnet-api \
+            --image us-central1-docker.pkg.dev/${{ secrets.PROJECT_ID }}/labsnet-repo/labsnet-api \
+            --platform managed \
+            --region us-central1 \
+            --allow-unauthenticated
