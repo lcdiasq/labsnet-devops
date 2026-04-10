@@ -3,6 +3,8 @@ name: CI Pipeline
 on:
   pull_request:
     branches: [ "main", "dev" ]
+  push:
+    branches: [ "main", "dev" ]
 
 jobs:
   build:
@@ -10,26 +12,31 @@ jobs:
 
     steps:
       - name: Checkout código
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: 'pip' # Acelera a pipeline nas próximas execuções
 
       - name: Instalar dependências
         run: |
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: Rodar testes
         run: |
+          # Define o path para que o pytest enxergue a pasta app
           export PYTHONPATH=$PYTHONPATH:.
           pytest
 
       - name: Lint (qualidade de código)
         run: |
-          flake8 app tests --ignore=E302,E305,W391,W292
+          # Mantendo seus ignores e adicionando estatísticas para facilitar a correção depois
+          flake8 app tests --ignore=E302,E305,W391,W292 --count --statistics
 
       - name: Security check
         run: |
+          # Verifica vulnerabilidades conhecidas nas libs do requirements.txt
           safety check
