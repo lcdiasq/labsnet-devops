@@ -14,7 +14,7 @@ jobs:
 
     steps:
       - name: Checkout código
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4 # Atualizei para v4, mais estável em 2026
 
       - name: Auth GCP
         uses: google-github-actions/auth@v2
@@ -30,16 +30,46 @@ jobs:
 
       - name: Build Docker
         run: |
-          docker build -t us-central1-docker.pkg.dev/${{ secrets.PROJECT_ID }}/labsnet-repo/labsnet-api .
+          # Adicionei a tag do commit para evitar que o Trivy analise a imagem errada
+          docker build -t us-central1-docker.pkg.dev/${{ secrets.PROJECT_ID }}/labsnet-repo/labsnet-api:${{ github.sha }} .
+
+      # --- 🛡️ INJEÇÃO DE SEGURANÇA (TRIVY) ---
+      - name: Scan de Vulnerabilidades (Trivy)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'us-central1-docker.pkg.dev/${{ secrets.PROJECT_ID }}/labsnet-repo/labsnet-api:${{ github.sha }}'
+          format: 'table'
+          exit-code: '1' # Se houver algo CRÍTICO, a pipeline para aqui
+          severity: 'CRITICAL,HIGH'
 
       - name: Push Docker
         run: |
-          docker push us-central1-docker.pkg.dev/${{ secrets.PROJECT_ID }}/labsnet-repo/labsnet-api
+          # Fazemos o push da imagem tagueada
+          docker push us-central1-docker.pkg.dev/${{ secrets.PROJECT_ID }}/labsnet-repo/labsnet-api:${{ github.sha }}
 
       - name: Deploy Cloud Run
         run: |
           gcloud run deploy labsnet-api \
-            --image us-central1-docker.pkg.dev/${{ secrets.PROJECT_ID }}/labsnet-repo/labsnet-api \
+            --image us-central1-docker.pkg.dev/${{ secrets.PROJECT_ID }}/labsnet-repo/labsnet-api:${{ github.sha }} \
             --platform managed \
             --region us-central1 \
             --allow-unauthenticated
+
+      # --- 💨 INJEÇÃO DE CONFIANÇA (SMOKE TEST) ---
+      - name: Smoke Test (Health Check)
+        run: |
+          # 1. Captura a URL real que o Cloud Run disponibilizou
+          APP_URL=$(gcloud run services describe labsnet-api --platform managed --region us-central1 --format 'value(status.url)')
+          
+          echo "Iniciando Smoke Test em: $APP_URL/health"
+          
+          # 2. Faz a chamada ao endpoint que você criou no app/routes/health.py
+          # O status code esperado é 200
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$APP_URL/health")
+          
+          if [ "$STATUS" -eq 200 ]; then
+            echo "✅ Aplicação rodando e saudável!"
+          else
+            echo "❌ Erro: Aplicação retornou status $STATUS no endpoint de health."
+            exit 1
+          fi
