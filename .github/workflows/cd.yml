@@ -1,4 +1,5 @@
 name: CD Pipeline
+run-name: "CI: ${{ github.actor }} em ${{ github.ref_name }}"
 
 on:
   push:
