@@ -1,42 +1,32 @@
-name: CD Pipeline
+name: "CodeQL Analysis"
 
 on:
   push:
     branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    - cron: '0 0 * * 1' # Roda automaticamente toda segunda-feira à meia-noite
 
 jobs:
-  deploy:
+  analyze:
+    name: Analyze
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write # Necessário para publicar os alertas na aba Security
 
     steps:
-      - name: Checkout código
-        uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      # 🔐 Autenticação com JSON
-      - name: Auth GCP
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+    # Inicializa as ferramentas do CodeQL para a linguagem Python
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: python
+        # O CodeQL para Python não precisa de passo de build, ele analisa o código fonte direto
 
-      - name: Setup gcloud
-        uses: google-github-actions/setup-gcloud@v2
-
-      - name: Configurar Docker
-        run: |
-          gcloud auth configure-docker us-central1-docker.pkg.dev
-
-      - name: Build Docker
-        run: |
-          docker build -t us-central1-docker.pkg.dev/${{ secrets.PROJECT_ID }}/labsnet-repo/labsnet-api .
-
-      - name: Push Docker
-        run: |
-          docker push us-central1-docker.pkg.dev/${{ secrets.PROJECT_ID }}/labsnet-repo/labsnet-api
-
-      - name: Deploy Cloud Run
-        run: |
-          gcloud run deploy labsnet-api \
-            --image us-central1-docker.pkg.dev/${{ secrets.PROJECT_ID }}/labsnet-repo/labsnet-api \
-            --platform managed \
-            --region us-central1 \
-            --allow-unauthenticated
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
