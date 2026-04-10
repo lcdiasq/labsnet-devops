@@ -1,5 +1,5 @@
 name: CD Pipeline
-run-name: "DEPLOY: ${{ github.actor }} para Cloud Run"
+run-name: "DEPLOY: ${{ github.actor }} para Cloud Run | Step 3"
 
 on:
   push:
