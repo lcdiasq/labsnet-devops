@@ -145,14 +145,9 @@ Este projeto foi desenvolvido com foco didático para ensino de:
 
 # 👨‍💻 Autor
 
-Projeto desenvolvido para fins educacionais e profissionais.
+```bash
+pip install -r requirements.txt
+uvicorn app.main:app --reload
 
----
 
-# 📌 Conclusão
-
-Este projeto representa um fluxo completo de DevOps:
-
-> Código → Teste → Build → Deploy → Monitoramento
-
----
+TESTE EM SALA DE AULA 
