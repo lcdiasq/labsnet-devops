@@ -36,7 +36,8 @@ jobs:
           # Mantendo seus ignores e adicionando estatísticas para facilitar a correção depois
           flake8 app tests --ignore=E302,E305,W391,W292 --count --statistics
 
-      - name: Security check
+      - name: Security check (Dependencies)
         run: |
-          # Verifica vulnerabilidades conhecidas nas libs do requirements.txt
-          safety check
+          pip install pip-audit
+          # O parâmetro -r aponta para o seu arquivo de dependências
+          pip-audit -r requirements.txt
