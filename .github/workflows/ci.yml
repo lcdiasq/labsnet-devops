@@ -1,5 +1,5 @@
 name: CI Pipeline
-run-name: "CI: ${{ github.actor }} em ${{ github.ref_name }}"
+run-name: "CI: ${{ github.actor }} em ${{ github.ref_name }} | Step 01"
 
 on:
   pull_request:
