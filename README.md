@@ -42,3 +42,6 @@ Isso garante compatibilidade com ambientes reais de produção.
 ```bash
 pip install -r requirements.txt
 uvicorn app.main:app --reload
+
+
+TESTE EM SALA DE AULA 
