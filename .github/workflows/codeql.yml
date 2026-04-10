@@ -1,4 +1,5 @@
 name: "CodeQL Analysis"
+run-name: "SECURITY: Análise profunda CodeQL"
 
 on:
   push:
